@@ -1,51 +1,48 @@
-# backend-python/engines/GamingCreativeEngine.py
-
-from core.dbManager import DBManager
+from utils.logger import log
+from db.dbManager import db
 from core.eventBus import eventBus
-from core.logger import logger
 
 class GamingCreativeEngine:
     name = "GamingCreativeEngine"
 
     def __init__(self):
-        self.db = DBManager()
-        self.event_bus = eventBus
+        self.projects = {}
 
-    async def run(self, input_data: dict):
-        """
-        Main engine method
-        Example: generate or evaluate creative gaming content
-        """
-        try:
-            # Example processing logic
-            record = {
-                "id": input_data.get("id"),
-                "game": input_data.get("game"),
-                "level": input_data.get("level"),
-                "creative_output": input_data.get("creative_output")
-            }
+    async def create_project(self, project_id, data):
+        self.projects[project_id] = data
+        # Write to DB and emit event
+        await db.set("gaming_projects", project_id, data, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "gaming_projects",
+            "key": project_id,
+            "value": data,
+            "source": self.name
+        })
+        log(f"[{self.name}] Project created: {project_id}")
+        return {"success": True, "project_id": project_id}
 
-            # Write to edge DB
-            await self.db.set("gaming_creative", record["id"], record, layer="edge")
-
-            # Emit DB update event
-            await self.event_bus.publish("db:update", {
-                "collection": "gaming_creative",
-                "key": record["id"],
-                "value": record,
+    async def update_project(self, project_id, data):
+        if project_id in self.projects:
+            self.projects[project_id].update(data)
+            await db.set("gaming_projects", project_id, self.projects[project_id], storage="edge")
+            eventBus.publish("db:update", {
+                "collection": "gaming_projects",
+                "key": project_id,
+                "value": self.projects[project_id],
                 "source": self.name
             })
+            log(f"[{self.name}] Project updated: {project_id}")
+            return {"success": True}
+        return {"success": False, "message": "Project not found"}
 
-            logger.log(f"[{self.name}] Processed GamingCreative record: {record['id']}")
-            return record
+    async def delete_project(self, project_id):
+        if project_id in self.projects:
+            del self.projects[project_id]
+            await db.delete("gaming_projects", project_id)
+            eventBus.publish("db:delete", {"collection": "gaming_projects", "key": project_id, "source": self.name})
+            log(f"[{self.name}] Project deleted: {project_id}")
+            return {"success": True}
+        return {"success": False, "message": "Project not found"}
 
-        except Exception as e:
-            logger.error(f"[{self.name}] Error in run(): {e}")
-            return {"error": str(e)}
-
-    async def recover(self, error: Exception):
-        """
-        Recovery method in case of failure
-        """
-        logger.warn(f"[{self.name}] Recovering from error: {error}")
-        return {"error": "Recovered from failure"}
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
