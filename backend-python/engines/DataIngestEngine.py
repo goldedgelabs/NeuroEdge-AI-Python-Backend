@@ -1,31 +1,19 @@
-from core.EngineBase import EngineBase
-from db.db_manager import db
-from event_bus import event_bus
+from db.db_manager import db_manager
+from utils.logger import log
 
-class DataIngestEngine(EngineBase):
-    async def run(self, input_data):
-        """
-        Handles ingestion of raw data from various sources (APIs, files, sensors),
-        cleans it, and stores it in the edge database.
-        """
-        source = input_data.get("source")
-        raw_data = input_data.get("data", {})
+class DataIngestEngine:
+    name = "DataIngestEngine"
 
-        try:
-            # Placeholder: implement data cleaning/processing logic here
-            cleaned_data = {k: v for k, v in raw_data.items() if v is not None}
-        except Exception as e:
-            cleaned_data = {"error": str(e)}
-
+    async def run(self, input_data=None):
+        log(f"[{self.name}] Ingesting data: {input_data}")
+        # Example data ingestion process
         result = {
             "collection": "data_ingest",
-            "id": input_data.get("id", "default_data"),
-            "data": cleaned_data,
-            "source": source
+            "id": input_data.get("id") if input_data else "default",
+            "data": input_data
         }
-
-        # Save to DB and notify subscribers
-        await db.set(result["collection"], result["id"], result, "edge")
-        await event_bus.publish("db:update", result)
-
+        await db_manager.set(result["collection"], result["id"], result)
         return result
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
