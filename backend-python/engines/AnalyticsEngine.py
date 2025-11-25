@@ -1,38 +1,20 @@
-from core.EngineBase import EngineBase
-from db.db_manager import db
-from event_bus import event_bus
+from db.db_manager import db_manager
+from utils.logger import log
 
-class AnalyticsEngine(EngineBase):
-    async def run(self, input_data):
-        """
-        Performs analytics on datasets, generates summaries, insights,
-        or metrics. Works on edge or shared database data.
-        """
-        collection = input_data.get("collection")
-        try:
-            # Fetch all relevant records from the edge DB
-            records = await db.get_all(collection, "edge")
-            
-            # Example analytics: count records, sum numeric fields
-            total_records = len(records)
-            summary = {"total_records": total_records}
+class AnalyticsEngine:
+    name = "AnalyticsEngine"
 
-            # Optional: compute numeric field aggregates if present
-            numeric_fields = input_data.get("numeric_fields", [])
-            for field in numeric_fields:
-                summary[field + "_sum"] = sum(r.get(field, 0) for r in records)
-
-        except Exception as e:
-            summary = {"error": str(e)}
-
+    async def run(self, input_data=None):
+        log(f"[{self.name}] Running with input: {input_data}")
+        # Example processing
         result = {
             "collection": "analytics",
-            "id": input_data.get("id", "analytics_default"),
-            "summary": summary
+            "id": input_data.get("id") if input_data else "default",
+            "data": input_data
         }
-
-        # Save to DB and notify subscribers
-        await db.set(result["collection"], result["id"], result, "edge")
-        await event_bus.publish("db:update", result)
-
+        # Write to DB automatically
+        await db_manager.set(result["collection"], result["id"], result)
         return result
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
