@@ -1,53 +1,49 @@
-# RealTimeRecommenderEngine.py
-from core.engine_base import EngineBase
-from db.db_manager import DBManager
-from core.event_bus import EventBus
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
-class RealTimeRecommenderEngine(EngineBase):
+class RealTimeRecommenderEngine:
     name = "RealTimeRecommenderEngine"
 
     def __init__(self):
-        super().__init__()
-        self.db = DBManager()
-        self.event_bus = EventBus()
+        self.recommendations = {}
 
-    async def run(self, input_data: dict):
-        """
-        Main entry point for real-time recommendations.
-        input_data: dict containing user_id, context, and previous interactions
-        """
-        user_id = input_data.get("user_id", "anonymous")
-        recommendations = {
-            "id": f"reco_{user_id}",
-            "collection": "recommendations",
-            "user_id": user_id,
-            "items": ["item1", "item2", "item3"],  # placeholder logic
-            "timestamp": input_data.get("timestamp", None)
-        }
+    async def add_item(self, item_id: str, metadata: dict):
+        """Add or update an item for recommendation."""
+        self.recommendations[item_id] = metadata
 
-        # Save to DB
-        await self.db.set(recommendations["collection"], recommendations["id"], recommendations, storage="edge")
-
-        # Emit DB update event
-        self.event_bus.publish("db:update", {
-            "collection": recommendations["collection"],
-            "key": recommendations["id"],
-            "value": recommendations,
+        # Save to DB and emit update event
+        await db.set("recommendation_items", item_id, metadata, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "recommendation_items",
+            "key": item_id,
+            "value": metadata,
             "source": self.name
         })
+        log(f"[{self.name}] Item added/updated: {item_id}")
+        return metadata
 
-        return recommendations
+    async def recommend(self, user_id: str, top_n: int = 5):
+        """Generate simple real-time recommendations (top N recent items)."""
+        if not self.recommendations:
+            return {"error": "No items available"}
+        
+        sorted_items = list(self.recommendations.items())[-top_n:]
+        recommendation_list = [{ "item_id": k, "metadata": v } for k, v in sorted_items]
 
-    async def recover(self, error: Exception):
-        """
-        Graceful error handling
-        """
-        print(f"[RealTimeRecommenderEngine] Recovered from error: {error}")
-        return {"error": str(error)}
+        log(f"[{self.name}] Recommendations for user {user_id}: {recommendation_list}")
+        return recommendation_list
 
-# Optional direct test
-if __name__ == "__main__":
-    import asyncio
-    engine = RealTimeRecommenderEngine()
-    result = asyncio.run(engine.run({"user_id": "user123", "timestamp": "2025-11-25T00:00:00Z"}))
-    print(result)
+    async def remove_item(self, item_id: str):
+        """Remove an item from recommendations."""
+        await db.delete("recommendation_items", item_id, storage="edge")
+        eventBus.publish("db:delete", {
+            "collection": "recommendation_items",
+            "key": item_id,
+            "source": self.name
+        })
+        log(f"[{self.name}] Removed item: {item_id}")
+        self.recommendations.pop(item_id, None)
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
