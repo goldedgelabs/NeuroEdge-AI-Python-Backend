@@ -1,39 +1,42 @@
-# RecoveryAgent.py
-# Agent responsible for system recovery, error handling, and failover procedures
+from ..core.dbManager import db
+from ..core.eventBus import eventBus
+from ..utils.logger import logger
+import time
 
 class RecoveryAgent:
+    name = "RecoveryAgent"
+
     def __init__(self):
-        self.name = "RecoveryAgent"
-        self.recovery_log = []
-        print("[RecoveryAgent] Initialized")
+        # Subscribe to DB events
+        eventBus.subscribe("db:update", self.handle_db_update)
+        eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    def log_error(self, error_info: dict):
-        self.recovery_log.append(error_info)
-        print(f"[RecoveryAgent] Logged error: {error_info}")
+    async def recover_system(self, error_info: dict):
+        """
+        Handles system recovery from faults or failures.
+        """
+        if not error_info:
+            logger.warn(f"[RecoveryAgent] Missing error information")
+            return None
 
-    def perform_recovery(self, service_name: str):
-        recovery_entry = {
-            "service": service_name,
-            "status": "recovered"
+        recovery_record = {
+            "timestamp": time.time(),
+            "error_info": error_info,
+            "status": "recovery_initiated"
         }
-        self.recovery_log.append(recovery_entry)
-        print(f"[RecoveryAgent] Performed recovery for {service_name}")
-        return recovery_entry
 
-    def get_recovery_history(self):
-        print(f"[RecoveryAgent] Recovery history: {self.recovery_log}")
-        return self.recovery_log
+        record_id = f"recovery_{int(time.time()*1000)}"
+        await db.set("recovery_logs", record_id, recovery_record, target="edge")
+        eventBus.publish("db:update", {"collection": "recovery_logs", "key": record_id, "value": recovery_record, "source": self.name})
 
-    async def handle_recovery_request(self, request: dict):
-        action = request.get("action")
-        if action == "recover":
-            return self.perform_recovery(request.get("service_name"))
-        elif action == "history":
-            return self.get_recovery_history()
-        elif action == "log":
-            return self.log_error(request.get("error_info"))
-        else:
-            return {"error": "Invalid action"}
+        logger.log(f"[RecoveryAgent] Recovery initiated: {record_id}")
+        return {"id": record_id, "recovery": recovery_record}
 
-    async def recover(self, error):
-        print(f"[RecoveryAgent] Recovered from error: {error}")
+    async def handle_db_update(self, event: dict):
+        logger.log(f"[RecoveryAgent] DB update received: {event.get('collection')}:{event.get('key')}")
+
+    async def handle_db_delete(self, event: dict):
+        logger.log(f"[RecoveryAgent] DB delete received: {event.get('collection')}:{event.get('key')}")
+
+    async def recover(self, error: Exception):
+        logger.error(f"[RecoveryAgent] Recovering from error: {error}")
