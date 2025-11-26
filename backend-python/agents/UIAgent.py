@@ -1,42 +1,38 @@
-# UIAgent.py
-# Agent responsible for handling user interface interactions and updates
+from ..core.dbManager import db
+from ..core.eventBus import eventBus
+from ..utils.logger import logger
+import time
 
 class UIAgent:
+    name = "UIAgent"
+
     def __init__(self):
-        self.name = "UIAgent"
-        self.active_sessions = {}
-        print("[UIAgent] Initialized")
+        # Subscribe to DB events
+        eventBus.subscribe("db:update", self.handle_db_update)
+        eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    def open_session(self, user_id: str):
-        self.active_sessions[user_id] = {"status": "active"}
-        print(f"[UIAgent] Session opened for user: {user_id}")
-        return self.active_sessions[user_id]
+    async def update_ui_component(self, component_id: str, data: dict):
+        """
+        Update a UI component's state in the database.
+        """
+        if not component_id or not data:
+            logger.warn(f"[UIAgent] Missing component_id or data")
+            return None
 
-    def close_session(self, user_id: str):
-        if user_id in self.active_sessions:
-            self.active_sessions[user_id]["status"] = "closed"
-            print(f"[UIAgent] Session closed for user: {user_id}")
-            return self.active_sessions[user_id]
-        return {"error": "Session not found"}
+        record = await db.get("ui_components", component_id, target="edge") or {}
+        record.update(data)
 
-    def update_ui(self, user_id: str, data: dict):
-        if user_id not in self.active_sessions:
-            return {"error": "Session not found"}
-        print(f"[UIAgent] UI updated for {user_id} with data: {data}")
-        return {"status": "updated"}
+        await db.set("ui_components", component_id, record, target="edge")
+        eventBus.publish("db:update", {"collection": "ui_components", "key": component_id, "value": record, "source": self.name})
 
-    async def handle_request(self, request: dict):
-        action = request.get("action")
-        user_id = request.get("user_id")
-        data = request.get("data", {})
-        if action == "open_session":
-            return self.open_session(user_id)
-        elif action == "close_session":
-            return self.close_session(user_id)
-        elif action == "update_ui":
-            return self.update_ui(user_id, data)
-        else:
-            return {"error": "Invalid action"}
+        logger.log(f"[UIAgent] Component updated: {component_id} → {data}")
+        return record
 
-    async def recover(self, error):
-        print(f"[UIAgent] Recovered from error: {error}")
+    async def handle_db_update(self, event: dict):
+        logger.log(f"[UIAgent] DB update received: {event.get('collection')}:{event.get('key')}")
+
+    async def handle_db_delete(self, event: dict):
+        logger.log(f"[UIAgent] DB delete received: {event.get('collection')}:{event.get('key')}")
+
+    async def recover(self, error: Exception):
+        logger.error(f"[UIAgent] Recovering from error: {error}")
