@@ -1,41 +1,47 @@
-# backend-python/engines/ResearchAnalyticsEngine.py
-
-from typing import Any, Dict
-from backend_python.db.db_manager import db
-from backend_python.core.event_bus import event_bus
-from backend_python.utils.logger import logger
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
 class ResearchAnalyticsEngine:
     name = "ResearchAnalyticsEngine"
 
     def __init__(self):
-        # Initialize internal state if needed
-        self.state = {}
+        self.reports = {}
 
-    async def run(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Example processing method for research analytics.
-        """
-        # Perform analytics computations (placeholder)
-        result = {
-            "collection": "research_analytics",
-            "id": input_data.get("id", "default_id"),
-            "analysis": f"Processed data {input_data}"
-        }
+    async def add_report(self, report_id: str, report_data: dict):
+        """Add or update a research analytics report."""
+        self.reports[report_id] = report_data
 
-        # Save to DB (edge)
-        await db.set(result["collection"], result["id"], result, "edge")
-
-        # Publish DB update event
-        event_bus.publish("db:update", {
-            "collection": result["collection"],
-            "key": result["id"],
-            "value": result,
+        # Save to DB and emit update event
+        await db.set("research_reports", report_id, report_data, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "research_reports",
+            "key": report_id,
+            "value": report_data,
             "source": self.name
         })
+        log(f"[{self.name}] Report added/updated: {report_id}")
+        return report_data
 
-        logger.log(f"[{self.name}] DB updated: {result['collection']}:{result['id']}")
-        return result
+    async def get_report(self, criteria: dict):
+        """Retrieve reports matching criteria."""
+        results = [
+            r for r in self.reports.values()
+            if all(r.get(k) == v for k, v in criteria.items())
+        ]
+        log(f"[{self.name}] Reports retrieved: {results}")
+        return results
 
-    async def recover(self, error: Exception):
-        logger.error(f"[{self.name}] Recovery from error: {error}")
+    async def remove_report(self, report_id: str):
+        """Remove a report."""
+        await db.delete("research_reports", report_id, storage="edge")
+        eventBus.publish("db:delete", {
+            "collection": "research_reports",
+            "key": report_id,
+            "source": self.name
+        })
+        log(f"[{self.name}] Removed report: {report_id}")
+        self.reports.pop(report_id, None)
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
