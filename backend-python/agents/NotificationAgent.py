@@ -13,23 +13,29 @@ class NotificationAgent:
         eventBus.subscribe("db:update", self.handle_db_update)
         eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    async def send_notification(self, user_id: str, message: str, meta: dict = None):
+    async def send_notification(self, user_id: str, message: str, metadata: dict = None) -> dict:
         """
-        Sends a notification to a user and logs it to the database.
+        Send a notification to a user and save it in the DB.
         """
         notification = {
             "user_id": user_id,
             "message": message,
-            "meta": meta or {},
-            "timestamp": time.time()
+            "metadata": metadata or {},
+            "timestamp": time.time(),
+            "status": "sent"
         }
 
-        notif_id = f"notif_{int(time.time()*1000)}"
-        await db.set("notifications", notif_id, notification, target="edge")
-        eventBus.publish("db:update", {"collection": "notifications", "key": notif_id, "value": notification, "source": self.name})
+        record_id = f"notif_{int(time.time()*1000)}"
+        await db.set("notifications", record_id, notification, target="edge")
+        eventBus.publish("db:update", {
+            "collection": "notifications",
+            "key": record_id,
+            "value": notification,
+            "source": self.name
+        })
 
-        logger.log(f"[NotificationAgent] Notification sent to {user_id}: {message}")
-        return notification
+        logger.log(f"[NotificationAgent] Notification sent: notifications:{record_id}")
+        return {"id": record_id, "notification": notification}
 
     async def handle_db_update(self, event: dict):
         logger.log(f"[NotificationAgent] DB update received: {event.get('collection')}:{event.get('key')}")
