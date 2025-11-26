@@ -1,0 +1,44 @@
+{
+  "name": "neuroedge-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "test": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "clsx": "^2.1.1",
+    "dexie": "^3.2.2",
+    "framer-motion": "^10.12.16",
+    "@headlessui/react": "^1.8.0",
+    "idb": "^7.1.1",
+    "lucide-react": "^0.305.0",
+    "next": "15.0.0",
+    "next-pwa": "^5.6.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "reactflow": "^11.8.2",
+    "recharts": "^2.7.2",
+    "socket.io-client": "^4.7.2",
+    "zustand": "^4.5.5",
+    "@tanstack/react-query": "^5.5.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.37.1",
+    "@types/node": "20.4.2",
+    "@types/react": "18.2.28",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.47.0",
+    "postcss": "^8.4.27",
+    "prettier": "^2.8.8",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.0"
+  }
+}

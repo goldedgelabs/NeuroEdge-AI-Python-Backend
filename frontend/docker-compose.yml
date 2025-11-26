@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  frontend:
+    build: ./frontend
+    container_name: neuroedge-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_TS_BACKEND: "http://backend-ts:4000"
+      NEXT_PUBLIC_PY_BACKEND: "http://backend-py:5000"
+      NEXT_PUBLIC_GO_BACKEND: "http://backend-go:6000"
+    depends_on:
+      - backend-ts
+      - backend-py
+      - backend-go
+
+  backend-ts:
+    image: alpine:latest
+    container_name: backend-ts
+    command: ["sh","-c","echo 'placeholder backend-ts'; sleep 3600"]
+
+  backend-py:
+    image: alpine:latest
+    container_name: backend-py
+    command: ["sh","-c","echo 'placeholder backend-py'; sleep 3600"]
+
+  backend-go:
+    image: alpine:latest
+    container_name: backend-go
+    command: ["sh","-c","echo 'placeholder backend-go'; sleep 3600"]

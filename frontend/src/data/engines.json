@@ -1,0 +1,424 @@
+{
+  "engines": [
+    {
+      "id": "engine-01",
+      "name": "Engine 01",
+      "description": "Demo engine number 01 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-02",
+      "name": "Engine 02",
+      "description": "Demo engine number 02 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-03",
+      "name": "Engine 03",
+      "description": "Demo engine number 03 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-04",
+      "name": "Engine 04",
+      "description": "Demo engine number 04 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-05",
+      "name": "Engine 05",
+      "description": "Demo engine number 05 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-06",
+      "name": "Engine 06",
+      "description": "Demo engine number 06 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-07",
+      "name": "Engine 07",
+      "description": "Demo engine number 07 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-08",
+      "name": "Engine 08",
+      "description": "Demo engine number 08 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-09",
+      "name": "Engine 09",
+      "description": "Demo engine number 09 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-10",
+      "name": "Engine 10",
+      "description": "Demo engine number 10 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-11",
+      "name": "Engine 11",
+      "description": "Demo engine number 11 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-12",
+      "name": "Engine 12",
+      "description": "Demo engine number 12 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-13",
+      "name": "Engine 13",
+      "description": "Demo engine number 13 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-14",
+      "name": "Engine 14",
+      "description": "Demo engine number 14 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-15",
+      "name": "Engine 15",
+      "description": "Demo engine number 15 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-16",
+      "name": "Engine 16",
+      "description": "Demo engine number 16 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-17",
+      "name": "Engine 17",
+      "description": "Demo engine number 17 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-18",
+      "name": "Engine 18",
+      "description": "Demo engine number 18 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-19",
+      "name": "Engine 19",
+      "description": "Demo engine number 19 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-20",
+      "name": "Engine 20",
+      "description": "Demo engine number 20 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-21",
+      "name": "Engine 21",
+      "description": "Demo engine number 21 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-22",
+      "name": "Engine 22",
+      "description": "Demo engine number 22 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-23",
+      "name": "Engine 23",
+      "description": "Demo engine number 23 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-24",
+      "name": "Engine 24",
+      "description": "Demo engine number 24 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-25",
+      "name": "Engine 25",
+      "description": "Demo engine number 25 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-26",
+      "name": "Engine 26",
+      "description": "Demo engine number 26 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-27",
+      "name": "Engine 27",
+      "description": "Demo engine number 27 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-28",
+      "name": "Engine 28",
+      "description": "Demo engine number 28 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-29",
+      "name": "Engine 29",
+      "description": "Demo engine number 29 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-30",
+      "name": "Engine 30",
+      "description": "Demo engine number 30 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-31",
+      "name": "Engine 31",
+      "description": "Demo engine number 31 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-32",
+      "name": "Engine 32",
+      "description": "Demo engine number 32 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-33",
+      "name": "Engine 33",
+      "description": "Demo engine number 33 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-34",
+      "name": "Engine 34",
+      "description": "Demo engine number 34 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-35",
+      "name": "Engine 35",
+      "description": "Demo engine number 35 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-36",
+      "name": "Engine 36",
+      "description": "Demo engine number 36 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-37",
+      "name": "Engine 37",
+      "description": "Demo engine number 37 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-38",
+      "name": "Engine 38",
+      "description": "Demo engine number 38 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-39",
+      "name": "Engine 39",
+      "description": "Demo engine number 39 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    },
+    {
+      "id": "engine-40",
+      "name": "Engine 40",
+      "description": "Demo engine number 40 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-41",
+      "name": "Engine 41",
+      "description": "Demo engine number 41 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "online"
+    },
+    {
+      "id": "engine-42",
+      "name": "Engine 42",
+      "description": "Demo engine number 42 performing task example.",
+      "params": {
+        "temperature": 0.7,
+        "max_tokens": 512
+      },
+      "status": "idle"
+    }
+  ]
+}

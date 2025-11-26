@@ -1,0 +1,430 @@
+{
+  "agents": [
+    {
+      "id": "agent-001",
+      "name": "Agent 001",
+      "status": "online",
+      "events": 3
+    },
+    {
+      "id": "agent-002",
+      "name": "Agent 002",
+      "status": "online",
+      "events": 6
+    },
+    {
+      "id": "agent-003",
+      "name": "Agent 003",
+      "status": "online",
+      "events": 9
+    },
+    {
+      "id": "agent-004",
+      "name": "Agent 004",
+      "status": "offline",
+      "events": 12
+    },
+    {
+      "id": "agent-005",
+      "name": "Agent 005",
+      "status": "online",
+      "events": 15
+    },
+    {
+      "id": "agent-006",
+      "name": "Agent 006",
+      "status": "online",
+      "events": 18
+    },
+    {
+      "id": "agent-007",
+      "name": "Agent 007",
+      "status": "online",
+      "events": 21
+    },
+    {
+      "id": "agent-008",
+      "name": "Agent 008",
+      "status": "offline",
+      "events": 24
+    },
+    {
+      "id": "agent-009",
+      "name": "Agent 009",
+      "status": "online",
+      "events": 27
+    },
+    {
+      "id": "agent-010",
+      "name": "Agent 010",
+      "status": "online",
+      "events": 30
+    },
+    {
+      "id": "agent-011",
+      "name": "Agent 011",
+      "status": "online",
+      "events": 33
+    },
+    {
+      "id": "agent-012",
+      "name": "Agent 012",
+      "status": "offline",
+      "events": 36
+    },
+    {
+      "id": "agent-013",
+      "name": "Agent 013",
+      "status": "online",
+      "events": 39
+    },
+    {
+      "id": "agent-014",
+      "name": "Agent 014",
+      "status": "online",
+      "events": 42
+    },
+    {
+      "id": "agent-015",
+      "name": "Agent 015",
+      "status": "online",
+      "events": 45
+    },
+    {
+      "id": "agent-016",
+      "name": "Agent 016",
+      "status": "offline",
+      "events": 48
+    },
+    {
+      "id": "agent-017",
+      "name": "Agent 017",
+      "status": "online",
+      "events": 51
+    },
+    {
+      "id": "agent-018",
+      "name": "Agent 018",
+      "status": "online",
+      "events": 54
+    },
+    {
+      "id": "agent-019",
+      "name": "Agent 019",
+      "status": "online",
+      "events": 57
+    },
+    {
+      "id": "agent-020",
+      "name": "Agent 020",
+      "status": "offline",
+      "events": 60
+    },
+    {
+      "id": "agent-021",
+      "name": "Agent 021",
+      "status": "online",
+      "events": 63
+    },
+    {
+      "id": "agent-022",
+      "name": "Agent 022",
+      "status": "online",
+      "events": 66
+    },
+    {
+      "id": "agent-023",
+      "name": "Agent 023",
+      "status": "online",
+      "events": 69
+    },
+    {
+      "id": "agent-024",
+      "name": "Agent 024",
+      "status": "offline",
+      "events": 72
+    },
+    {
+      "id": "agent-025",
+      "name": "Agent 025",
+      "status": "online",
+      "events": 75
+    },
+    {
+      "id": "agent-026",
+      "name": "Agent 026",
+      "status": "online",
+      "events": 78
+    },
+    {
+      "id": "agent-027",
+      "name": "Agent 027",
+      "status": "online",
+      "events": 81
+    },
+    {
+      "id": "agent-028",
+      "name": "Agent 028",
+      "status": "offline",
+      "events": 84
+    },
+    {
+      "id": "agent-029",
+      "name": "Agent 029",
+      "status": "online",
+      "events": 87
+    },
+    {
+      "id": "agent-030",
+      "name": "Agent 030",
+      "status": "online",
+      "events": 90
+    },
+    {
+      "id": "agent-031",
+      "name": "Agent 031",
+      "status": "online",
+      "events": 93
+    },
+    {
+      "id": "agent-032",
+      "name": "Agent 032",
+      "status": "offline",
+      "events": 96
+    },
+    {
+      "id": "agent-033",
+      "name": "Agent 033",
+      "status": "online",
+      "events": 99
+    },
+    {
+      "id": "agent-034",
+      "name": "Agent 034",
+      "status": "online",
+      "events": 102
+    },
+    {
+      "id": "agent-035",
+      "name": "Agent 035",
+      "status": "online",
+      "events": 105
+    },
+    {
+      "id": "agent-036",
+      "name": "Agent 036",
+      "status": "offline",
+      "events": 108
+    },
+    {
+      "id": "agent-037",
+      "name": "Agent 037",
+      "status": "online",
+      "events": 111
+    },
+    {
+      "id": "agent-038",
+      "name": "Agent 038",
+      "status": "online",
+      "events": 114
+    },
+    {
+      "id": "agent-039",
+      "name": "Agent 039",
+      "status": "online",
+      "events": 117
+    },
+    {
+      "id": "agent-040",
+      "name": "Agent 040",
+      "status": "offline",
+      "events": 120
+    },
+    {
+      "id": "agent-041",
+      "name": "Agent 041",
+      "status": "online",
+      "events": 123
+    },
+    {
+      "id": "agent-042",
+      "name": "Agent 042",
+      "status": "online",
+      "events": 126
+    },
+    {
+      "id": "agent-043",
+      "name": "Agent 043",
+      "status": "online",
+      "events": 129
+    },
+    {
+      "id": "agent-044",
+      "name": "Agent 044",
+      "status": "offline",
+      "events": 132
+    },
+    {
+      "id": "agent-045",
+      "name": "Agent 045",
+      "status": "online",
+      "events": 135
+    },
+    {
+      "id": "agent-046",
+      "name": "Agent 046",
+      "status": "online",
+      "events": 138
+    },
+    {
+      "id": "agent-047",
+      "name": "Agent 047",
+      "status": "online",
+      "events": 141
+    },
+    {
+      "id": "agent-048",
+      "name": "Agent 048",
+      "status": "offline",
+      "events": 144
+    },
+    {
+      "id": "agent-049",
+      "name": "Agent 049",
+      "status": "online",
+      "events": 147
+    },
+    {
+      "id": "agent-050",
+      "name": "Agent 050",
+      "status": "online",
+      "events": 150
+    },
+    {
+      "id": "agent-051",
+      "name": "Agent 051",
+      "status": "online",
+      "events": 153
+    },
+    {
+      "id": "agent-052",
+      "name": "Agent 052",
+      "status": "offline",
+      "events": 156
+    },
+    {
+      "id": "agent-053",
+      "name": "Agent 053",
+      "status": "online",
+      "events": 159
+    },
+    {
+      "id": "agent-054",
+      "name": "Agent 054",
+      "status": "online",
+      "events": 162
+    },
+    {
+      "id": "agent-055",
+      "name": "Agent 055",
+      "status": "online",
+      "events": 165
+    },
+    {
+      "id": "agent-056",
+      "name": "Agent 056",
+      "status": "offline",
+      "events": 168
+    },
+    {
+      "id": "agent-057",
+      "name": "Agent 057",
+      "status": "online",
+      "events": 171
+    },
+    {
+      "id": "agent-058",
+      "name": "Agent 058",
+      "status": "online",
+      "events": 174
+    },
+    {
+      "id": "agent-059",
+      "name": "Agent 059",
+      "status": "online",
+      "events": 177
+    },
+    {
+      "id": "agent-060",
+      "name": "Agent 060",
+      "status": "offline",
+      "events": 180
+    },
+    {
+      "id": "agent-061",
+      "name": "Agent 061",
+      "status": "online",
+      "events": 183
+    },
+    {
+      "id": "agent-062",
+      "name": "Agent 062",
+      "status": "online",
+      "events": 186
+    },
+    {
+      "id": "agent-063",
+      "name": "Agent 063",
+      "status": "online",
+      "events": 189
+    },
+    {
+      "id": "agent-064",
+      "name": "Agent 064",
+      "status": "offline",
+      "events": 192
+    },
+    {
+      "id": "agent-065",
+      "name": "Agent 065",
+      "status": "online",
+      "events": 195
+    },
+    {
+      "id": "agent-066",
+      "name": "Agent 066",
+      "status": "online",
+      "events": 198
+    },
+    {
+      "id": "agent-067",
+      "name": "Agent 067",
+      "status": "online",
+      "events": 201
+    },
+    {
+      "id": "agent-068",
+      "name": "Agent 068",
+      "status": "offline",
+      "events": 204
+    },
+    {
+      "id": "agent-069",
+      "name": "Agent 069",
+      "status": "online",
+      "events": 207
+    },
+    {
+      "id": "agent-070",
+      "name": "Agent 070",
+      "status": "online",
+      "events": 210
+    },
+    {
+      "id": "agent-071",
+      "name": "Agent 071",
+      "status": "online",
+      "events": 213
+    }
+  ]
+}
