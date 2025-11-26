@@ -1,43 +1,47 @@
-# backend-python/engines/ResearchEngine.py
-
-from typing import Any, Dict
-from backend_python.db.db_manager import db
-from backend_python.core.event_bus import event_bus
-from backend_python.utils.logger import logger
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
 class ResearchEngine:
     name = "ResearchEngine"
 
     def __init__(self):
-        self.research_store = []
+        self.documents = {}
 
-    async def run(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Process research input and generate output.
-        """
-        record_id = input_data.get("id", "default_research_id")
-        research_record = {
-            "collection": "research",
-            "id": record_id,
-            "data": input_data.get("data", {}),
-            "notes": input_data.get("notes", ""),
-            "timestamp": input_data.get("timestamp"),
-            "source": self.name
-        }
+    async def add_document(self, doc_id: str, doc_data: dict):
+        """Add or update a research document."""
+        self.documents[doc_id] = doc_data
 
-        # Save to DB (edge)
-        await db.set(research_record["collection"], research_record["id"], research_record, "edge")
-
-        # Publish DB update event
-        event_bus.publish("db:update", {
-            "collection": research_record["collection"],
-            "key": research_record["id"],
-            "value": research_record,
+        # Save to DB and emit update event
+        await db.set("research_documents", doc_id, doc_data, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "research_documents",
+            "key": doc_id,
+            "value": doc_data,
             "source": self.name
         })
+        log(f"[{self.name}] Document added/updated: {doc_id}")
+        return doc_data
 
-        logger.log(f"[{self.name}] DB updated: {research_record['collection']}:{research_record['id']}")
-        return research_record
+    async def get_documents(self, criteria: dict):
+        """Retrieve documents matching criteria."""
+        results = [
+            d for d in self.documents.values()
+            if all(d.get(k) == v for k, v in criteria.items())
+        ]
+        log(f"[{self.name}] Documents retrieved: {results}")
+        return results
 
-    async def recover(self, error: Exception):
-        logger.error(f"[{self.name}] Recovery from error: {error}")
+    async def remove_document(self, doc_id: str):
+        """Remove a document."""
+        await db.delete("research_documents", doc_id, storage="edge")
+        eventBus.publish("db:delete", {
+            "collection": "research_documents",
+            "key": doc_id,
+            "source": self.name
+        })
+        log(f"[{self.name}] Removed document: {doc_id}")
+        self.documents.pop(doc_id, None)
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
