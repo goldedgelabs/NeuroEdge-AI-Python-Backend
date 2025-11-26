@@ -1,40 +1,48 @@
-# backend-python/engines/SimulationEngine.py
-
-from typing import Any, Dict
-from backend_python.db.db_manager import db
-from backend_python.core.event_bus import event_bus
-from backend_python.utils.logger import logger
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
 class SimulationEngine:
     name = "SimulationEngine"
 
     def __init__(self):
-        self.state = {}
+        self.simulations = {}
 
-    async def run(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Example simulation processing method.
-        """
-        # Perform simulation logic (placeholder)
-        result = {
-            "collection": "simulation",
-            "id": input_data.get("id", "default_sim_id"),
-            "simulation_result": f"Simulated data {input_data}"
-        }
+    async def create_simulation(self, sim_id: str, config: dict):
+        """Create a new simulation."""
+        self.simulations[sim_id] = config
 
-        # Save to DB (edge)
-        await db.set(result["collection"], result["id"], result, "edge")
+        # Save to DB and emit update
+        await db.set("simulations", sim_id, config, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "simulations",
+            "key": sim_id,
+            "value": config,
+            "source": self.name
+        })
+        log(f"[{self.name}] Simulation created: {sim_id}")
+        return config
 
-        # Publish DB update event
-        event_bus.publish("db:update", {
-            "collection": result["collection"],
-            "key": result["id"],
+    async def run_simulation(self, sim_id: str, input_data: dict):
+        """Run simulation and return results (mocked)."""
+        config = self.simulations.get(sim_id)
+        if not config:
+            log(f"[{self.name}] Simulation not found: {sim_id}")
+            return {"error": "Simulation not found"}
+
+        # Here you can implement actual simulation logic
+        result = {"sim_id": sim_id, "input": input_data, "result": "success"}
+        
+        # Save result to DB and emit update
+        await db.set("simulation_results", sim_id, result, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "simulation_results",
+            "key": sim_id,
             "value": result,
             "source": self.name
         })
-
-        logger.log(f"[{self.name}] DB updated: {result['collection']}:{result['id']}")
+        log(f"[{self.name}] Simulation run complete: {sim_id}")
         return result
 
-    async def recover(self, error: Exception):
-        logger.error(f"[{self.name}] Recovery from error: {error}")
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
