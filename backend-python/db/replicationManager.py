@@ -1,33 +1,21 @@
 # backend-python/db/replicationManager.py
+from core.dbManager import db
+from core.eventBus import eventBus
+from utils.logger import logger
 
-from ..core.dbManager import db
-from ..core.eventBus import eventBus
-from ..utils.logger import logger
-import asyncio
+async def replicateEdgeToShared():
+    """
+    Replicate all edge DB collections to shared DB
+    """
+    logger.log("[ReplicationManager] Starting edge → shared replication...")
+    for collection, items in db.store.get("edge", {}).items():
+        for key, value in items.items():
+            await db.set(collection, key, value, target="shared")
+            eventBus.publish("db:update", {"collection": collection, "key": key, "value": value, "source": "replicationManager"})
+    logger.log("[ReplicationManager] Edge → shared replication complete.")
 
-async def replicate_edge_to_shared(collection: str = None):
-    logger.log(f"[ReplicationManager] Starting replication for: {collection or 'all collections'}")
-    collections_to_replicate = [collection] if collection else list(db.store['edge'].keys())
+# Subscribe to edge updates for live replication
+async def on_edge_update(event):
+    await db.set(event["collection"], event["key"], event["value"], target="shared")
 
-    for coll in collections_to_replicate:
-        edge_data = await db.get_all(coll, target="edge") or []
-        for record in edge_data:
-            record_id = record.get("id")
-            if not record_id:
-                continue
-            await db.set(coll, record_id, record, target="shared")
-            logger.log(f"[ReplicationManager] Replicated {coll}:{record_id} → shared")
-            eventBus.publish("db:update", {
-                "collection": coll,
-                "key": record_id,
-                "value": record,
-                "source": "replicationManager"
-            })
-    logger.log(f"[ReplicationManager] Replication complete for: {collection or 'all collections'}")
-
-def subscribe_to_db_updates():
-    async def on_update(event):
-        if event.get("source") != "replicationManager":
-            await replicate_edge_to_shared(event.get("collection"))
-    eventBus.subscribe("db:update", lambda event: asyncio.create_task(on_update(event)))
-    logger.log("[ReplicationManager] Subscribed to DB updates for automatic replication")
+eventBus.subscribe("db:update", on_edge_update)
