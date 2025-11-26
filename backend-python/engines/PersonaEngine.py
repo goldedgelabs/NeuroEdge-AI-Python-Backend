@@ -1,41 +1,46 @@
-from core.EngineBase import EngineBase
-from db.db_manager import db
-from event_bus import event_bus
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
-class PersonaEngine(EngineBase):
-    """
-    Handles user persona creation, updates, and retrieval.
-    """
-    async def create_persona(self, input_data):
-        persona_id = input_data.get("id")
-        if not persona_id:
-            raise ValueError("Persona ID is required")
+class PersonaEngine:
+    name = "PersonaEngine"
 
-        persona_data = {
-            "collection": "personas",
+    def __init__(self):
+        self.personas = {}
+
+    async def create_persona(self, persona_id: str, attributes: dict):
+        """Create or update a persona."""
+        persona = {
             "id": persona_id,
-            "name": input_data.get("name"),
-            "preferences": input_data.get("preferences", {}),
-            "history": input_data.get("history", [])
+            "attributes": attributes
         }
+        self.personas[persona_id] = persona
 
-        # Save to DB
-        await db.set(persona_data["collection"], persona_data["id"], persona_data, "edge")
-
-        # Publish DB update event
-        await event_bus.publish("db:update", persona_data)
-
-        return persona_data
+        # Save to DB and emit update event
+        await db.set("personas", persona_id, persona, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "personas",
+            "key": persona_id,
+            "value": persona,
+            "source": self.name
+        })
+        log(f"[{self.name}] Created/Updated persona: {persona_id}")
+        return persona
 
     async def get_persona(self, persona_id: str):
-        return await db.get("personas", persona_id, "edge")
+        """Retrieve a persona."""
+        return await db.get("personas", persona_id, storage="edge")
 
-    async def update_preferences(self, persona_id: str, preferences: dict):
-        persona = await self.get_persona(persona_id)
-        if not persona:
-            raise ValueError(f"Persona not found: {persona_id}")
+    async def delete_persona(self, persona_id: str):
+        """Delete a persona."""
+        await db.delete("personas", persona_id, storage="edge")
+        eventBus.publish("db:delete", {
+            "collection": "personas",
+            "key": persona_id,
+            "source": self.name
+        })
+        log(f"[{self.name}] Deleted persona: {persona_id}")
+        self.personas.pop(persona_id, None)
 
-        persona["preferences"].update(preferences)
-        await db.set(persona["collection"], persona_id, persona, "edge")
-        await event_bus.publish("db:update", persona)
-        return persona
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
