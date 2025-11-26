@@ -1,43 +1,49 @@
-# backend-python/engines/PhoneSecurityEngine.py
-
-from typing import Any, Dict
-from backend_python.db.db_manager import db
-from backend_python.core.event_bus import event_bus
-from backend_python.utils.logger import logger
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
 class PhoneSecurityEngine:
     name = "PhoneSecurityEngine"
 
     def __init__(self):
-        self.device_status = {}
+        self.devices = {}
 
-    async def run(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Scan and secure phone devices.
-        """
-        device_id = input_data.get("device_id", "unknown_device")
-        status_record = {
-            "collection": "phone_security",
-            "id": device_id,
-            "threat_level": input_data.get("threat_level", "low"),
-            "scanned_at": input_data.get("scanned_at"),
-            "actions_taken": input_data.get("actions_taken", []),
-            "source": self.name
-        }
+    async def register_device(self, device_id: str, info: dict):
+        """Register a new device or update existing."""
+        self.devices[device_id] = info
 
-        # Save to DB (edge)
-        await db.set(status_record["collection"], status_record["id"], status_record, "edge")
-
-        # Publish DB update event
-        event_bus.publish("db:update", {
-            "collection": status_record["collection"],
-            "key": status_record["id"],
-            "value": status_record,
+        # Save to DB and emit update event
+        await db.set("devices", device_id, info, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "devices",
+            "key": device_id,
+            "value": info,
             "source": self.name
         })
+        log(f"[{self.name}] Registered/Updated device: {device_id}")
+        return info
 
-        logger.log(f"[{self.name}] DB updated: {status_record['collection']}:{status_record['id']}")
-        return status_record
+    async def check_security(self, device_id: str):
+        """Perform security checks for a device."""
+        device = self.devices.get(device_id)
+        if not device:
+            return {"error": "Device not found"}
 
-    async def recover(self, error: Exception):
-        logger.error(f"[{self.name}] Recovery from error: {error}")
+        # Example check
+        status = "secure" if device.get("status") == "active" else "alert"
+        log(f"[{self.name}] Device {device_id} security status: {status}")
+        return {"device_id": device_id, "status": status}
+
+    async def remove_device(self, device_id: str):
+        """Remove device from system."""
+        await db.delete("devices", device_id, storage="edge")
+        eventBus.publish("db:delete", {
+            "collection": "devices",
+            "key": device_id,
+            "source": self.name
+        })
+        log(f"[{self.name}] Removed device: {device_id}")
+        self.devices.pop(device_id, None)
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
