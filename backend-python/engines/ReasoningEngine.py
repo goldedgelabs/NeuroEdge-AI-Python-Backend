@@ -1,59 +1,45 @@
-# ReasoningEngine.py
-from core.engine_base import EngineBase
-from db.db_manager import DBManager
-from core.event_bus import EventBus
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
-class ReasoningEngine(EngineBase):
+class ReasoningEngine:
     name = "ReasoningEngine"
 
     def __init__(self):
-        super().__init__()
-        self.db = DBManager()
-        self.event_bus = EventBus()
+        self.knowledge_base = {}
 
-    async def run(self, input_data: dict):
-        """
-        Main reasoning logic.
-        input_data: dict containing context, facts, and optional user info
-        """
-        context = input_data.get("context", [])
-        user_id = input_data.get("user_id", "anonymous")
+    async def add_fact(self, fact_id: str, fact_data: dict):
+        """Add or update a fact in the knowledge base."""
+        self.knowledge_base[fact_id] = fact_data
 
-        # Placeholder reasoning logic
-        conclusion = f"Based on {len(context)} facts, the engine concludes XYZ"
-
-        reasoning_record = {
-            "id": f"reasoning_{user_id}",
-            "collection": "reasonings",
-            "user_id": user_id,
-            "context": context,
-            "conclusion": conclusion,
-            "timestamp": input_data.get("timestamp", None)
-        }
-
-        # Save to DB
-        await self.db.set(reasoning_record["collection"], reasoning_record["id"], reasoning_record, storage="edge")
-
-        # Emit DB update event
-        self.event_bus.publish("db:update", {
-            "collection": reasoning_record["collection"],
-            "key": reasoning_record["id"],
-            "value": reasoning_record,
+        # Save to DB and emit update event
+        await db.set("reasoning_facts", fact_id, fact_data, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "reasoning_facts",
+            "key": fact_id,
+            "value": fact_data,
             "source": self.name
         })
+        log(f"[{self.name}] Fact added/updated: {fact_id}")
+        return fact_data
 
-        return reasoning_record
+    async def infer(self, query: str):
+        """Perform simple reasoning over stored facts."""
+        # Example: return facts containing the query string
+        results = {k: v for k, v in self.knowledge_base.items() if query.lower() in str(v).lower()}
+        log(f"[{self.name}] Inference for query '{query}': {results}")
+        return results
 
-    async def recover(self, error: Exception):
-        """
-        Graceful error handling
-        """
-        print(f"[ReasoningEngine] Recovered from error: {error}")
-        return {"error": str(error)}
+    async def remove_fact(self, fact_id: str):
+        """Remove a fact from the knowledge base."""
+        await db.delete("reasoning_facts", fact_id, storage="edge")
+        eventBus.publish("db:delete", {
+            "collection": "reasoning_facts",
+            "key": fact_id,
+            "source": self.name
+        })
+        log(f"[{self.name}] Removed fact: {fact_id}")
+        self.knowledge_base.pop(fact_id, None)
 
-# Optional direct test
-if __name__ == "__main__":
-    import asyncio
-    engine = ReasoningEngine()
-    result = asyncio.run(engine.run({"user_id": "user123", "context": ["fact1", "fact2"]}))
-    print(result)
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
