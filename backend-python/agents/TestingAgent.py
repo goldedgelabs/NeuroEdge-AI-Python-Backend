@@ -1,44 +1,43 @@
-# TestingAgent.py
-# Agent responsible for automated testing and validation of system components
+from ..core.dbManager import db
+from ..core.eventBus import eventBus
+from ..utils.logger import logger
+import time
 
 class TestingAgent:
+    name = "TestingAgent"
+
     def __init__(self):
-        self.name = "TestingAgent"
-        self.test_results = []
-        print("[TestingAgent] Initialized")
+        # Subscribe to DB events
+        eventBus.subscribe("db:update", self.handle_db_update)
+        eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    def run_unit_test(self, test_name: str, test_func):
-        try:
-            result = test_func()
-            status = "passed" if result else "failed"
-            self.test_results.append({"test": test_name, "status": status})
-            print(f"[TestingAgent] Unit test '{test_name}' {status}")
-            return {"test": test_name, "status": status}
-        except Exception as e:
-            self.test_results.append({"test": test_name, "status": "error", "error": str(e)})
-            print(f"[TestingAgent] Unit test '{test_name}' error: {e}")
-            return {"test": test_name, "status": "error", "error": str(e)}
+    async def run_test(self, test_name: str, data: dict):
+        """
+        Execute a test scenario and store results.
+        """
+        if not test_name or not data:
+            logger.warn(f"[TestingAgent] Missing test_name or data")
+            return None
 
-    def get_test_summary(self):
-        summary = {
-            "total_tests": len(self.test_results),
-            "passed": sum(1 for r in self.test_results if r["status"] == "passed"),
-            "failed": sum(1 for r in self.test_results if r["status"] == "failed"),
-            "errors": sum(1 for r in self.test_results if r["status"] == "error"),
+        result = {
+            "timestamp": time.time(),
+            "test_name": test_name,
+            "data": data,
+            "status": "pending"
         }
-        print(f"[TestingAgent] Test summary: {summary}")
-        return summary
 
-    async def handle_test_request(self, request: dict):
-        action = request.get("action")
-        if action == "run_unit_test":
-            test_name = request.get("test_name")
-            test_func = request.get("test_func")
-            return self.run_unit_test(test_name, test_func)
-        elif action == "get_summary":
-            return self.get_test_summary()
-        else:
-            return {"error": "Invalid action"}
+        record_id = f"test_{int(time.time()*1000)}"
+        await db.set("test_results", record_id, result, target="edge")
+        eventBus.publish("db:update", {"collection": "test_results", "key": record_id, "value": result, "source": self.name})
 
-    async def recover(self, error):
-        print(f"[TestingAgent] Recovered from error: {error}")
+        logger.log(f"[TestingAgent] Test recorded: {record_id} → {test_name}")
+        return {"id": record_id, "result": result}
+
+    async def handle_db_update(self, event: dict):
+        logger.log(f"[TestingAgent] DB update received: {event.get('collection')}:{event.get('key')}")
+
+    async def handle_db_delete(self, event: dict):
+        logger.log(f"[TestingAgent] DB delete received: {event.get('collection')}:{event.get('key')}")
+
+    async def recover(self, error: Exception):
+        logger.error(f"[TestingAgent] Recovering from error: {error}")
