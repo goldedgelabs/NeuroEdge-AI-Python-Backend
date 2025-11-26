@@ -13,27 +13,39 @@ class HealthMonitoringAgent:
         eventBus.subscribe("db:update", self.handle_db_update)
         eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    async def check_system_health(self):
+    async def monitor_system(self, metrics: dict) -> dict:
         """
-        Perform basic health checks for the system.
+        Monitor system health metrics and log critical alerts.
         """
-        health_report = {
+        if not metrics:
+            logger.warn(f"[HealthMonitoringAgent] No metrics provided")
+            return {"error": "No metrics provided"}
+
+        alerts = []
+        if metrics.get("cpu") and metrics["cpu"] > 85:
+            alerts.append("High CPU usage detected")
+        if metrics.get("memory") and metrics["memory"] > 90:
+            alerts.append("High memory usage detected")
+        if metrics.get("disk") and metrics["disk"] > 90:
+            alerts.append("High disk usage detected")
+
+        record = {
             "timestamp": time.time(),
-            "status": "healthy",
-            "metrics": {
-                "cpu_usage": 45,  # Placeholder example
-                "memory_usage": 65,  # Placeholder example
-                "active_agents": 71
-            }
+            "metrics": metrics,
+            "alerts": alerts
         }
 
-        # Save health report to DB
-        report_id = f"health_{int(time.time()*1000)}"
-        await db.set("system_health", report_id, health_report, target="edge")
-        eventBus.publish("db:update", {"collection": "system_health", "key": report_id, "value": health_report, "source": self.name})
+        record_id = f"health_{int(time.time()*1000)}"
+        await db.set("system_health_logs", record_id, record, target="edge")
+        eventBus.publish("db:update", {
+            "collection": "system_health_logs",
+            "key": record_id,
+            "value": record,
+            "source": self.name
+        })
 
-        logger.log(f"[HealthMonitoringAgent] Health report saved: {report_id}")
-        return health_report
+        logger.log(f"[HealthMonitoringAgent] System health logged with {len(alerts)} alerts")
+        return {"record_id": record_id, "alerts": alerts}
 
     async def handle_db_update(self, event: dict):
         logger.log(f"[HealthMonitoringAgent] DB update received: {event.get('collection')}:{event.get('key')}")
