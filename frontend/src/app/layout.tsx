@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { registerServiceWorker } from '@/pwa/register-sw';
 import '@/styles/globals.css';
 import FloatingChat from '@/components/chat-floating/FloatingChat';
 import { ReactNode } from 'react';
@@ -13,7 +12,14 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
-    registerServiceWorker();
+    // Your service worker injection
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/service-worker.js")
+          .catch(err => console.error("SW registration failed", err));
+      });
+    }
   }, []);
 
   return (
