@@ -3,6 +3,7 @@
 from ..core.dbManager import db
 from ..core.eventBus import eventBus
 from ..utils.logger import logger
+import time
 
 class SecurityAuditAgent:
     name = "SecurityAuditAgent"
@@ -12,28 +13,41 @@ class SecurityAuditAgent:
         eventBus.subscribe("db:update", self.handle_db_update)
         eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    async def audit_security(self, collection: str):
+    async def audit_security(self, collection: str) -> dict:
         """
-        Perform a security audit on a given collection.
+        Perform a security audit on the specified collection.
         """
-        records = await db.get_all(collection, target="edge")
+        records = await db.get_all(collection, target="edge") or []
         audit_results = []
 
         for record in records:
             issues = []
-            if "password" in record and not record.get("password"):
-                issues.append("Missing password")
-            if "access_level" in record and record["access_level"] not in ["user", "admin", "super"]:
-                issues.append("Invalid access level")
-            audit_results.append({"id": record.get("id"), "issues": issues})
+            if "password" in record:
+                issues.append("Password field present")
+            if record.get("role") == "admin" and not record.get("2fa_enabled"):
+                issues.append("Admin without 2FA")
+            audit_results.append({
+                "key": record.get("id"),
+                "issues": issues or ["No issues"]
+            })
 
-        # Save audit results
-        audit_id = f"audit_{collection}_{int(time.time()*1000)}"
-        await db.set("security_audits", audit_id, audit_results, target="edge")
-        eventBus.publish("db:update", {"collection": "security_audits", "key": audit_id, "value": audit_results, "source": self.name})
+        result = {
+            "timestamp": time.time(),
+            "collection": collection,
+            "audit_results": audit_results
+        }
 
-        logger.log(f"[SecurityAuditAgent] Security audit completed for {collection}, saved as {audit_id}")
-        return audit_results
+        record_id = f"audit_{int(time.time()*1000)}"
+        await db.set("security_audits", record_id, result, target="edge")
+        eventBus.publish("db:update", {
+            "collection": "security_audits",
+            "key": record_id,
+            "value": result,
+            "source": self.name
+        })
+
+        logger.log(f"[SecurityAuditAgent] Security audit saved: security_audits:{record_id}")
+        return result
 
     async def handle_db_update(self, event: dict):
         logger.log(f"[SecurityAuditAgent] DB update received: {event.get('collection')}:{event.get('key')}")
