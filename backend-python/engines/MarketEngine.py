@@ -1,59 +1,80 @@
-from core.EngineBase import EngineBase
-from db.db_manager import db
-from event_bus import event_bus
-from utils.logger import logger
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
-class MarketEngine(EngineBase):
-    """
-    Handles market analysis, pricing, trends, and predictions.
-    """
 
-    async def add_market_data(self, market_id: str, data: dict):
-        """
-        Add or update market data.
-        """
-        record_data = {
-            "id": market_id,
-            "collection": "market",
-            "data": data
+class MarketEngine:
+    name = "MarketEngine"
+
+    def __init__(self):
+        self.records = {}
+
+    async def analyze_market(self, record_id: str, market_data: dict):
+        """Analyze market data and produce insights."""
+        insights = self._generate_insights(market_data)
+
+        data = {
+            "id": record_id,
+            "market_data": market_data,
+            "insights": insights
         }
 
-        # Write to DB
-        await db.set("market", market_id, record_data, "edge")
-        await event_bus.publish("db:update", {
-            "collection": "market",
-            "key": market_id,
-            "value": record_data,
-            "source": "MarketEngine"
+        # Save to DB
+        await db.set("market_records", record_id, data, storage="edge")
+
+        # Emit replication event
+        eventBus.publish("db:update", {
+            "collection": "market_records",
+            "key": record_id,
+            "value": data,
+            "source": self.name
         })
 
-        logger.log(f"[MarketEngine] Market data updated: {market_id}")
-        return record_data
+        log(f"[{self.name}] Market analysis complete for record {record_id}")
+        return data
 
-    async def get_market_data(self, market_id: str):
-        """
-        Retrieve market data from edge DB.
-        """
-        record = await db.get("market", market_id, "edge")
-        logger.log(f"[MarketEngine] Retrieved market data: {market_id}")
-        return record
+    async def update_record(self, record_id: str, patch: dict):
+        """Update existing market record."""
+        existing = await db.get("market_records", record_id, storage="edge") or {}
 
-    async def run(self, input_data: dict):
-        """
-        Main entry point:
-        {
-            "action": "add" | "get",
-            "market_id": str,
-            "data": dict (optional)
-        }
-        """
-        action = input_data.get("action")
-        market_id = input_data.get("market_id")
+        updated = {**existing, **patch}
+        updated["id"] = record_id
 
-        if action == "add":
-            data = input_data.get("data", {})
-            return await self.add_market_data(market_id, data)
-        elif action == "get":
-            return await self.get_market_data(market_id)
-        else:
-            return {"error": f"Unknown action: {action}"}
+        await db.set("market_records", record_id, updated, storage="edge")
+
+        eventBus.publish("db:update", {
+            "collection": "market_records",
+            "key": record_id,
+            "value": updated,
+            "source": self.name
+        })
+
+        log(f"[{self.name}] Market record updated: {record_id}")
+        return updated
+
+    async def remove_record(self, record_id: str):
+        """Remove a market record."""
+        await db.delete("market_records", record_id)
+
+        eventBus.publish("db:delete", {
+            "collection": "market_records",
+            "key": record_id,
+            "source": self.name
+        })
+
+        log(f"[{self.name}] Market record removed: {record_id}")
+        return {"success": True, "id": record_id}
+
+    def _generate_insights(self, market_data: dict):
+        """Simple insight generation logic."""
+        price = market_data.get("price", 0)
+        trend = market_data.get("trend", "stable")
+
+        if price > 1000 and trend == "up":
+            return "high_growth"
+        if price < 200 and trend == "down":
+            return "risk_alert"
+        return "stable"
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
