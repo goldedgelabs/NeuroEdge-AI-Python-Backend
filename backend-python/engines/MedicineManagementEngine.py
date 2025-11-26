@@ -1,59 +1,67 @@
-from core.EngineBase import EngineBase
-from db.db_manager import db
-from event_bus import event_bus
-from utils.logger import logger
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
-class MedicineManagementEngine(EngineBase):
-    """
-    Handles medicines, dosages, manufacturers, and related medical data.
-    """
 
-    async def add_medicine(self, medicine_id: str, data: dict):
-        """
-        Add or update medicine information.
-        """
-        record_data = {
+class MedicineManagementEngine:
+    name = "MedicineManagementEngine"
+
+    def __init__(self):
+        self.records = {}
+
+    async def add_medicine(self, medicine_id: str, details: dict):
+        """Add a new medicine record."""
+        record = {
             "id": medicine_id,
-            "collection": "medicine",
-            "data": data
+            "details": details
         }
 
-        # Write to DB
-        await db.set("medicine", medicine_id, record_data, "edge")
-        await event_bus.publish("db:update", {
-            "collection": "medicine",
+        await db.set("medicines", medicine_id, record, storage="edge")
+
+        eventBus.publish("db:update", {
+            "collection": "medicines",
             "key": medicine_id,
-            "value": record_data,
-            "source": "MedicineManagementEngine"
+            "value": record,
+            "source": self.name
         })
 
-        logger.log(f"[MedicineManagementEngine] Medicine updated: {medicine_id}")
-        return record_data
-
-    async def get_medicine(self, medicine_id: str):
-        """
-        Retrieve medicine data from edge DB.
-        """
-        record = await db.get("medicine", medicine_id, "edge")
-        logger.log(f"[MedicineManagementEngine] Retrieved medicine: {medicine_id}")
+        log(f"[{self.name}] Added medicine: {medicine_id}")
         return record
 
-    async def run(self, input_data: dict):
-        """
-        Main entry point:
-        {
-            "action": "add" | "get",
-            "medicine_id": str,
-            "data": dict (optional)
-        }
-        """
-        action = input_data.get("action")
-        medicine_id = input_data.get("medicine_id")
+    async def update_medicine(self, medicine_id: str, patch: dict):
+        """Update existing medicine record."""
+        existing = await db.get("medicines", medicine_id, storage="edge") or {}
 
-        if action == "add":
-            data = input_data.get("data", {})
-            return await self.add_medicine(medicine_id, data)
-        elif action == "get":
-            return await self.get_medicine(medicine_id)
-        else:
-            return {"error": f"Unknown action: {action}"}
+        updated = {**existing, **patch, "id": medicine_id}
+        await db.set("medicines", medicine_id, updated, storage="edge")
+
+        eventBus.publish("db:update", {
+            "collection": "medicines",
+            "key": medicine_id,
+            "value": updated,
+            "source": self.name
+        })
+
+        log(f"[{self.name}] Updated medicine: {medicine_id}")
+        return updated
+
+    async def remove_medicine(self, medicine_id: str):
+        """Remove a medicine record."""
+        await db.delete("medicines", medicine_id)
+
+        eventBus.publish("db:delete", {
+            "collection": "medicines",
+            "key": medicine_id,
+            "source": self.name
+        })
+
+        log(f"[{self.name}] Removed medicine: {medicine_id}")
+        return {"success": True, "id": medicine_id}
+
+    async def list_medicines(self):
+        """Return all medicines."""
+        records = await db.all("medicines", storage="edge")
+        return records
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
