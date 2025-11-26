@@ -1,33 +1,51 @@
-# RoutingAgent.py
-# Agent responsible for routing tasks, messages, or data between engines and agents
+# backend-python/agents/RoutingAgent.py
+
+from ..core.dbManager import db
+from ..core.eventBus import eventBus
+from ..utils.logger import logger
+import time
 
 class RoutingAgent:
+    name = "RoutingAgent"
+
     def __init__(self):
-        self.name = "RoutingAgent"
-        self.routes = {}
+        # Subscribe to DB events
+        eventBus.subscribe("db:update", self.handle_db_update)
+        eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    def add_route(self, source: str, destination: str):
-        if source not in self.routes:
-            self.routes[source] = []
-        self.routes[source].append(destination)
-        print(f"[RoutingAgent] Route added: {source} → {destination}")
+    async def route_request(self, collection: str, request: dict) -> dict:
+        """
+        Determine routing for incoming requests.
+        """
+        # Example routing logic: choose node based on hash of user ID
+        user_id = request.get("user_id", "unknown")
+        node = f"node_{hash(user_id) % 5}"
 
-    def remove_route(self, source: str, destination: str):
-        if source in self.routes and destination in self.routes[source]:
-            self.routes[source].remove(destination)
-            print(f"[RoutingAgent] Route removed: {source} → {destination}")
+        result = {
+            "timestamp": time.time(),
+            "user_id": user_id,
+            "assigned_node": node,
+            "request": request
+        }
 
-    async def route(self, source: str, payload):
-        if source not in self.routes:
-            return {"error": f"No routes found for source {source}"}
-        for destination in self.routes[source]:
-            try:
-                # Here we assume destination has a `process` method
-                await destination.process(payload)
-                print(f"[RoutingAgent] Routed payload from {source} to {destination}")
-            except Exception as e:
-                await self.recover(e)
-        return {"status": "routed"}
+        # Save routing info to DB
+        record_id = f"route_{int(time.time()*1000)}"
+        await db.set(collection, record_id, result, target="edge")
+        eventBus.publish("db:update", {
+            "collection": collection,
+            "key": record_id,
+            "value": result,
+            "source": self.name
+        })
 
-    async def recover(self, error):
-        print(f"[RoutingAgent] Recovered from error: {error}")
+        logger.log(f"[RoutingAgent] Routing info saved: {collection}:{record_id}")
+        return result
+
+    async def handle_db_update(self, event: dict):
+        logger.log(f"[RoutingAgent] DB update received: {event.get('collection')}:{event.get('key')}")
+
+    async def handle_db_delete(self, event: dict):
+        logger.log(f"[RoutingAgent] DB delete received: {event.get('collection')}:{event.get('key')}")
+
+    async def recover(self, error: Exception):
+        logger.error(f"[RoutingAgent] Recovering from error: {error}")
