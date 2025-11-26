@@ -1,28 +1,29 @@
-from core.EngineBase import EngineBase
-from db.db_manager import db
-from event_bus import event_bus
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
-class VoiceEngine(EngineBase):
-    async def run(self, input_data):
-        """
-        Processes voice input and returns transcription or analysis.
-        """
-        voice_file = input_data.get("file_path", "")
-        transcription = ""
-        
-        try:
-            # Placeholder: Use a real speech-to-text library here
-            transcription = f"Transcribed text for file: {voice_file}"
-        except Exception as e:
-            transcription = f"Error processing voice: {e}"
+class VoiceEngine:
+    name = "VoiceEngine"
 
-        result = {
-            "collection": "voice_transcriptions",
-            "id": input_data.get("id", "default_voice"),
-            "file_path": voice_file,
-            "transcription": transcription
-        }
+    def __init__(self):
+        self.audio_records = {}
 
-        await db.set(result["collection"], result["id"], result, "edge")
-        await event_bus.publish("db:update", result)
-        return result
+    async def process_audio(self, audio_id: str, audio_data: bytes):
+        """Process and analyze audio input."""
+        # For demo, just store a "transcribed" version
+        transcription = f"transcribed_{len(audio_data)}bytes"
+        self.audio_records[audio_id] = transcription
+
+        # Save to DB and emit update
+        await db.set("audio", audio_id, {"audio_id": audio_id, "transcription": transcription}, storage="edge")
+        eventBus.publish("db:update", {
+            "collection": "audio",
+            "key": audio_id,
+            "value": {"audio_id": audio_id, "transcription": transcription},
+            "source": self.name
+        })
+        log(f"[{self.name}] Audio processed and stored: {audio_id}")
+        return {"audio_id": audio_id, "transcription": transcription}
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
