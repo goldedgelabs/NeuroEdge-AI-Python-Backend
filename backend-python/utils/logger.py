@@ -2,13 +2,13 @@
 import time
 
 class Logger:
-    def log(self, msg):
-        print(f"[LOG {time.strftime('%H:%M:%S')}] {msg}")
+    def log(self, msg: str):
+        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] INFO: {msg}")
 
-    def warn(self, msg):
-        print(f"[WARN {time.strftime('%H:%M:%S')}] {msg}")
+    def warn(self, msg: str):
+        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] WARN: {msg}")
 
-    def error(self, msg):
-        print(f"[ERROR {time.strftime('%H:%M:%S')}] {msg}")
+    def error(self, msg: str):
+        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] ERROR: {msg}")
 
 logger = Logger()
