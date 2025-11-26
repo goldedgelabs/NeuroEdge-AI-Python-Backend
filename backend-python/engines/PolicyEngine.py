@@ -1,52 +1,49 @@
-# PolicyEngine.py
-from core.engine_base import EngineBase
-from db.db_manager import DBManager
-from core.event_bus import EventBus
+from utils.logger import log
+from db.dbManager import db
+from core.eventBus import eventBus
 
-class PolicyEngine(EngineBase):
+class PolicyEngine:
     name = "PolicyEngine"
 
     def __init__(self):
-        super().__init__()
-        self.db = DBManager()
-        self.event_bus = EventBus()
+        self.policies = {}
 
-    async def run(self, input_data: dict):
-        """
-        Main entry point for the PolicyEngine.
-        input_data: dict containing action details and context
-        """
-        # Example: process policy rules
-        policy_result = {
-            "id": input_data.get("id", "policy_default"),
+    async def create_policy(self, policy_id: str, policy_data: dict):
+        """Add or update a policy."""
+        self.policies[policy_id] = policy_data
+
+        # Save to DB and emit update event
+        await db.set("policies", policy_id, policy_data, storage="edge")
+        eventBus.publish("db:update", {
             "collection": "policies",
-            "status": "processed",
-            "details": input_data
-        }
-
-        # Save to DB
-        await self.db.set(policy_result["collection"], policy_result["id"], policy_result, storage="edge")
-
-        # Emit DB update event
-        self.event_bus.publish("db:update", {
-            "collection": policy_result["collection"],
-            "key": policy_result["id"],
-            "value": policy_result,
+            "key": policy_id,
+            "value": policy_data,
             "source": self.name
         })
+        log(f"[{self.name}] Policy created/updated: {policy_id}")
+        return policy_data
 
-        return policy_result
+    async def enforce_policy(self, policy_id: str, context: dict):
+        """Check if a context satisfies a policy."""
+        policy = self.policies.get(policy_id)
+        if not policy:
+            return {"error": "Policy not found"}
 
-    async def recover(self, error: Exception):
-        """
-        Handle errors gracefully.
-        """
-        print(f"[PolicyEngine] Recovered from error: {error}")
-        return {"error": str(error)}
+        # Simplified enforcement logic
+        allowed = all(context.get(k) == v for k, v in policy.items())
+        log(f"[{self.name}] Enforcement check for {policy_id}: {allowed}")
+        return {"policy_id": policy_id, "allowed": allowed}
 
-# Optional: for direct testing
-if __name__ == "__main__":
-    import asyncio
-    engine = PolicyEngine()
-    result = asyncio.run(engine.run({"id": "policy1", "rule": "example_rule"}))
-    print(result)
+    async def delete_policy(self, policy_id: str):
+        """Delete policy from system."""
+        await db.delete("policies", policy_id, storage="edge")
+        eventBus.publish("db:delete", {
+            "collection": "policies",
+            "key": policy_id,
+            "source": self.name
+        })
+        log(f"[{self.name}] Deleted policy: {policy_id}")
+        self.policies.pop(policy_id, None)
+
+    async def recover(self, err):
+        log(f"[{self.name}] Recovered from error: {err}")
