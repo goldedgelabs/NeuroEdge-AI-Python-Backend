@@ -1,0 +1,13 @@
+name = "neuroedge-proxy"
+compatibility_date = "2025-11-26"
+type = "javascript"
+account_id = "REPLACE_ACCOUNT_ID"
+workers_dev = true
+
+[durable_objects]
+bindings = [
+  { name = "EVENT_ROUTER", class_name = "EventRouter" }
+]
+
+[build]
+command = "npm run build:worker"

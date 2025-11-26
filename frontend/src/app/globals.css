@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --ne-primary: #6366f1;
+  --ne-background: #ffffff;
+  --ne-foreground: #0f172a;
+  --ne-card: #f8fafc;
+}
+html,body,#__next{height:100%}
+body{background:var(--ne-background);color:var(--ne-foreground)}
