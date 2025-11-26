@@ -1,26 +1,41 @@
-# SyncAgent.py
-# Agent responsible for synchronizing data between nodes or databases
+# backend-python/agents/SyncAgent.py
+
+from ..core.dbManager import db
+from ..core.eventBus import eventBus
+from ..utils.logger import logger
+import time
 
 class SyncAgent:
+    name = "SyncAgent"
+
     def __init__(self):
-        self.name = "SyncAgent"
+        # Subscribe to DB events
+        eventBus.subscribe("db:update", self.handle_db_update)
+        eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    async def synchronize(self, collection: str = None):
+    async def sync_collections(self, collections: list):
         """
-        Synchronize a specific collection or entire database if collection is None
+        Synchronize specified collections from edge to shared storage.
         """
-        if collection:
-            print(f"[SyncAgent] Synchronizing collection: {collection}")
-        else:
-            print("[SyncAgent] Synchronizing entire database")
-        # Simulate sync operation
-        return {"status": "success", "collection": collection or "all"}
+        synced = {}
+        for collection in collections:
+            records = await db.get_all(collection, target="edge")
+            if not records:
+                logger.warn(f"[SyncAgent] No records to sync in collection: {collection}")
+                continue
 
-    async def handleDBUpdate(self, data):
-        """
-        Optional: react to DB updates
-        """
-        print(f"[SyncAgent] DB Update received: {data}")
+            for key, value in records.items():
+                await db.set(collection, key, value, target="shared")
+            synced[collection] = len(records)
+            logger.log(f"[SyncAgent] Collection synced: {collection} ({len(records)} records)")
 
-    async def recover(self, error):
-        print(f"[SyncAgent] Recovered from error: {error}")
+        return synced
+
+    async def handle_db_update(self, event: dict):
+        logger.log(f"[SyncAgent] DB update received: {event.get('collection')}:{event.get('key')}")
+
+    async def handle_db_delete(self, event: dict):
+        logger.log(f"[SyncAgent] DB delete received: {event.get('collection')}:{event.get('key')}")
+
+    async def recover(self, error: Exception):
+        logger.error(f"[SyncAgent] Recovering from error: {error}")
