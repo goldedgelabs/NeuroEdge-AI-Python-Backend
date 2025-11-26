@@ -1,23 +1,30 @@
 // src/lib/encrypted-db-adapter.ts
-import { db } from '@/lib/offline-db';
-import { encryptJSON, decryptJSON } from '@/lib/secure-storage';
+import { addEncryptedRow } from '@/lib/offline-db';
+import { encryptJSON, decryptJSON, getRawKey } from '@/lib/secure-storage';
 
+/**
+ * Save a message object encrypted in the DB.
+ * msg: { role, text, createdAt, status }
+ */
 export async function addEncryptedMessage(msg: any) {
   const cipher = await encryptJSON(msg);
-  return db.table('messages').add({ cipher, createdAt: Date.now() });
+  return addEncryptedRow(cipher);
 }
 
+/**
+ * Return decrypted messages (uses secure-storage.decryptJSON)
+ */
 export async function getDecryptedMessages() {
-  const rows = await db.table('messages').toArray();
-  const out = [];
-  for (const r of rows) {
-    try {
-      const obj = await decryptJSON(r.cipher);
-      out.push({ ...obj, _id: r.id });
-    } catch (e) {
-      // fallback: if decryption fails, skip or return raw
-      out.push({ _raw: r });
-    }
-  }
-  return out;
+  // we delegate to offline-db.getAllDecryptedMessages for batch decryption,
+  // but in case you want to directly read raw rows and decrypt here, you can implement it.
+  const { getAllDecryptedMessages } = await import('@/lib/offline-db');
+  return getAllDecryptedMessages();
+}
+
+/**
+ * Helper to check if a key exists (for UI)
+ */
+export async function hasStoredKey(): Promise<boolean> {
+  const raw = await getRawKey();
+  return !!raw;
 }
