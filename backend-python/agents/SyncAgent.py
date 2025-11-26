@@ -13,23 +13,26 @@ class SyncAgent:
         eventBus.subscribe("db:update", self.handle_db_update)
         eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    async def sync_collections(self, collections: list):
+    async def sync_collections(self, source_collection: str, target_collection: str) -> dict:
         """
-        Synchronize specified collections from edge to shared storage.
+        Synchronize data from source collection to target collection.
         """
-        synced = {}
-        for collection in collections:
-            records = await db.get_all(collection, target="edge")
-            if not records:
-                logger.warn(f"[SyncAgent] No records to sync in collection: {collection}")
-                continue
+        records = await db.get_all(source_collection, target="edge")
+        if not records:
+            logger.warn(f"[SyncAgent] No records to sync from: {source_collection}")
+            return {"error": "No records to sync"}
 
-            for key, value in records.items():
-                await db.set(collection, key, value, target="shared")
-            synced[collection] = len(records)
-            logger.log(f"[SyncAgent] Collection synced: {collection} ({len(records)} records)")
+        for key, record in records.items():
+            await db.set(target_collection, key, record, target="edge")
+            eventBus.publish("db:update", {
+                "collection": target_collection,
+                "key": key,
+                "value": record,
+                "source": self.name
+            })
 
-        return synced
+        logger.log(f"[SyncAgent] Synced {len(records)} records from {source_collection} to {target_collection}")
+        return {"synced_count": len(records), "target_collection": target_collection}
 
     async def handle_db_update(self, event: dict):
         logger.log(f"[SyncAgent] DB update received: {event.get('collection')}:{event.get('key')}")
