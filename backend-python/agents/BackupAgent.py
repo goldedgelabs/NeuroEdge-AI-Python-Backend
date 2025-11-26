@@ -1,26 +1,39 @@
-# BackupAgent.py
-# Agent responsible for backing up data to local or remote storage
+# backend-python/agents/BackupAgent.py
+
+from ..core.dbManager import db
+from ..core.eventBus import eventBus
+from ..utils.logger import logger
+import time
 
 class BackupAgent:
+    name = "BackupAgent"
+
     def __init__(self):
-        self.name = "BackupAgent"
+        # Subscribe to DB events
+        eventBus.subscribe("db:update", self.handle_db_update)
+        eventBus.subscribe("db:delete", self.handle_db_delete)
 
-    async def perform_backup(self, collection: str = None):
+    async def backup_collection(self, collection: str):
         """
-        Perform backup of specific collection or entire database if collection is None
+        Back up all records from a given collection.
         """
-        if collection:
-            print(f"[BackupAgent] Backing up collection: {collection}")
-        else:
-            print("[BackupAgent] Backing up entire database")
-        # Simulate backup operation
-        return {"status": "success", "collection": collection or "all"}
+        records = await db.get_all(collection, target="edge")
+        if not records:
+            logger.warn(f"[BackupAgent] No records to backup in collection: {collection}")
+            return None
 
-    async def handleDBUpdate(self, data):
-        """
-        Optional: react to DB changes if incremental backup is needed
-        """
-        print(f"[BackupAgent] DB Update received: {data}")
+        backup_id = f"backup_{collection}_{int(time.time()*1000)}"
+        await db.set("backups", backup_id, {"collection": collection, "records": records, "timestamp": time.time()}, target="edge")
+        eventBus.publish("db:update", {"collection": "backups", "key": backup_id, "value": records, "source": self.name})
 
-    async def recover(self, error):
-        print(f"[BackupAgent] Recovered from error: {error}")
+        logger.log(f"[BackupAgent] Backup created for collection: {collection}")
+        return {"backup_id": backup_id, "count": len(records)}
+
+    async def handle_db_update(self, event: dict):
+        logger.log(f"[BackupAgent] DB update received: {event.get('collection')}:{event.get('key')}")
+
+    async def handle_db_delete(self, event: dict):
+        logger.log(f"[BackupAgent] DB delete received: {event.get('collection')}:{event.get('key')}")
+
+    async def recover(self, error: Exception):
+        logger.error(f"[BackupAgent] Recovering from error: {error}")
